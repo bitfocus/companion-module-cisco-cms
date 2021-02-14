@@ -1,2 +1,2 @@
-# companion-module-generic-http
-See HELP.md and LICENSE
+# companion-module-cisco-cms
+HELP.md and LICENSE
