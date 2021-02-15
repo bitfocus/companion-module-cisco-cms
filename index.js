@@ -96,13 +96,6 @@ instance.prototype.destroy = function() {
 
 instance.prototype.actions = function(system) {
 	var self = this;
-	var urlLabel = 'URL';
-
-	if ( self.config.host !== undefined ) {
-		if ( self.config.host.length > 0 ) {
-			urlLabel = 'URI';
-		}
-	}
 
 	self.setActions({
 		'audioMute': {
@@ -219,236 +212,138 @@ instance.prototype.actions = function(system) {
 					default: ''
 				}
 			]
-		},
-		
+		}
 	});
 }
 
 instance.prototype.action = function(action) {
 	var self = this;
-	authstring = new Buffer(self.config.username + ':' + self.config.password).toString('base64');
+	authstring = Buffer.from(self.config.username + ':' + self.config.password).toString('base64');
 	var cmd;
+	var request = require('request');
+	var options;
 		
 	if (action.action == 'audioMute') {
 			
 		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
-			var request = require('request');
-			var options = {
-			  'method': 'PUT',
-			  'rejectUnauthorized': false,
-			  'url': cmd,
-			  'headers': {
- 				   'Authorization': 'Basic ' + authstring,
-				    'Content-Type': 'application/x-www-form-urlencoded'
-			  },
-			  form: {
-			    'rxAudioMute': action.options.mute
-			  },
-			};
-
-			console.log(options);
-
-			request(options, function (error, response) {
-				if (error !== null) {
-					self.log('error', 'HTTP Request failed (' + error + ')');
-					self.status(self.STATUS_ERROR, error);
-					console.log(error);
-				}
-				else {
-					self.status(self.STATUS_OK);
-				}
-			});
-		
+		options = {
+			'method': 'PUT',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic ' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			form: {
+				'rxAudioMute': action.options.mute
+			}
+		};
 	}
-
 	else if (action.action == 'videoMute') {
 		
 		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
-			var request = require('request');
-			var options = {
-			  'method': 'PUT',
-			  'rejectUnauthorized': false,
-			  'url': cmd,
-			  'headers': {
- 				   'Authorization': 'Basic' + authstring,
-				    'Content-Type': 'application/x-www-form-urlencoded'
-			  },
-			  form: {
-			    'rxVideoMute': action.options.mute
-			  }
-			};
-
-			console.log(options);
-
-			request(options, function (error, response) {
-				if (error !== null) {
-					self.log('error', 'HTTP Request failed (' + error + ')');
-					self.status(self.STATUS_ERROR, error);
-					console.log(error);
-				}
-				else {
-					self.status(self.STATUS_OK);
-				}
-			});
-		
+		options = {
+			'method': 'PUT',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			form: {
+				'rxVideoMute': action.options.mute
+			}
+		};
 	}
-
 	else if (action.action == 'callLayout') {
 			
 		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID + '/participants/*';
-			var request = require('request');
-			var options = {
-			  'method': 'PUT',
-			  'rejectUnauthorized': false,
-			  'url': cmd,
-			  'headers': {
- 				   'Authorization': 'Basic' + authstring,
-				    'Content-Type': 'application/x-www-form-urlencoded'
-			  },
-			  form: {
-			    'layout': action.options.layout
-			  }
-			};
-
-			console.log(options);
-
-			request(options, function (error, response) {
-				if (error !== null) {
-					self.log('error', 'HTTP Request failed (' + error + ')');
-					self.status(self.STATUS_ERROR, error);
-					console.log(error);
-				}
-				else {
-					self.status(self.STATUS_OK);
-				}
-			});
-		
+		options = {
+			'method': 'PUT',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			form: {
+				'layout': action.options.layout
+			}
+		};
 	}
-
 	else if (action.action == 'addParticipant') {
 			
 		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID + '/participants';
-			var request = require('request');
-			var options = {
-			  'method': 'POST',
-			  'rejectUnauthorized': false,
-			  'url': cmd,
-			  'headers': {
- 				   'Authorization': 'Basic' + authstring,
-				    'Content-Type': 'application/x-www-form-urlencoded'
-			  },
-			  form: {
-			    'remoteParty': action.options.uri
-			  }
-			};
-
-			console.log(options);
-
-			request(options, function (error, response) {
-				if (error !== null) {
-					self.log('error', 'HTTP Request failed (' + error + ')');
-					self.status(self.STATUS_ERROR, error);
-					console.log(error);
-				}
-				else {
-					self.status(self.STATUS_OK);
-				}
-			});
-		
+		options = {
+			'method': 'POST',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			form: {
+				'remoteParty': action.options.uri
+			}
+		};
 	}
-
 	else if (action.action == 'callerLayout') {
 			
 		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
-			var request = require('request');
-			var options = {
-			  'method': 'PUT',
-			  'rejectUnauthorized': false,
-			  'url': cmd,
-			  'headers': {
- 				   'Authorization': 'Basic' + authstring,
-				    'Content-Type': 'application/x-www-form-urlencoded'
-			  },
-			  form: {
-			    'chosenLayout': action.options.layout
-			  }
-			};
-
-			console.log(options);
-
-			request(options, function (error, response) {
-				if (error !== null) {
-					self.log('error', 'HTTP Request failed (' + error + ')');
-					self.status(self.STATUS_ERROR, error);
-					console.log(error);
-				}
-				else {
-					self.status(self.STATUS_OK);
-				}
-			});
-		
+		options = {
+			'method': 'PUT',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			form: {
+				'chosenLayout': action.options.layout
+			}
+		};
 	}
-
 	else if (action.action == 'dropParticipant') {
 			
 		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
-			var request = require('request');
-			var options = {
-			  'method': 'DELETE',
-			  'rejectUnauthorized': false,
-			  'url': cmd,
-			  'headers': {
- 				   'Authorization': 'Basic' + authstring,
-				    'Content-Type': 'application/x-www-form-urlencoded'
-			  }
-			};
-
-			console.log(options);
-
-			request(options, function (error, response) {
-				if (error !== null) {
-					self.log('error', 'HTTP Request failed (' + error + ')');
-					self.status(self.STATUS_ERROR, error);
-					console.log(error);
-				}
-				else {
-					self.status(self.STATUS_OK);
-				}
-			});
-		
+		options = {
+			'method': 'DELETE',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			}
+		};
 	}
-
 	else if (action.action == 'dropCall') {
 			
 		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID;
-			var request = require('request');
-			var options = {
-			  'method': 'DELETE',
-			  'rejectUnauthorized': false,
-			  'url': cmd,
-			  'headers': {
- 				   'Authorization': 'Basic' + authstring,
-				    'Content-Type': 'application/x-www-form-urlencoded'
-			  }
-			};
-
-			console.log(options);
-
-			request(options, function (error, response) {
-				if (error !== null) {
-					self.log('error', 'HTTP Request failed (' + error + ')');
-					self.status(self.STATUS_ERROR, error);
-					console.log(error);
-				}
-				else {
-					self.status(self.STATUS_OK);
-				}
-			});
-		
+		options = {
+			'method': 'DELETE',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			}
+		};
 	}
 
+	if ( options !== undefined) {
+		console.log(options);
 
-
+		request(options, function (error, response) {
+			if (error !== null) {
+				self.log('error', 'HTTP Request failed (' + error + ')');
+				self.status(self.STATUS_ERROR, error);
+				console.log(error);
+			}
+			else {
+				self.status(self.STATUS_OK);
+			}
+		});
+	}
 }
 
 instance_skel.extendedBy(instance);
