@@ -1,4 +1,5 @@
 var instance_skel = require('../../instance_skel');
+var parseString = require('xml2js').parseString;
 var debug;
 var log;
 
@@ -22,6 +23,8 @@ var LAYOUT = [
 	{ id: 'onePlusN', label: 'onePlusN'}
 ];
 
+var calllist = [];
+
 function instance(system, id, config) {
 	var self = this;
 
@@ -37,7 +40,7 @@ instance.prototype.updateConfig = function(config) {
 	var self = this;
 
 	self.config = config;
-
+	self.initAPI.bind(this)();
 	self.actions();
 }
 
@@ -45,7 +48,7 @@ instance.prototype.init = function() {
 	var self = this;
 
 	self.status(self.STATE_OK);
-
+	self.initAPI.bind(this)();
 	debug = self.debug;
 	log = self.log;
 }
@@ -83,11 +86,131 @@ instance.prototype.config_fields = function () {
 			id: 'password',
 			label: 'Password',
 			width: 12
+		},
+		{
+			type: 'text',
+			id: 'apiPollInfo',
+			width: 12,
+			label: 'API Poll Interval warning',
+			value:
+				'Adjusting the API Polling Interval can impact performance. <br />' +
+				'A lower invterval allows for more responsive feedback, but may impact CPU usage. <br />' +
+				'See the help section for more details.' 
+		},
+		{
+			type: 'textinput',
+			id: 'apiPollInterval',
+			label: 'API Polling interval (ms) (default: 500, min: 250)',
+			width: 12,
+			default: 500,
+			min: 250,
+			max: 10000,
+			regex: this.REGEX_NUMBER
 		}
 	
 	]
 }
 
+instance.prototype.initAPI = function () {
+	var self = this;
+	authstring = Buffer.from(self.config.username + ':' + self.config.password).toString('base64');
+	var cmd;
+	var request = require('request');
+	var options;
+
+	const getCalls = () => {
+		self.calllist = [];
+		self.callleglist = [];
+		
+		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/';
+		options = {
+			'method': 'GET',
+			'rejectUnauthorized': false,
+			'url': cmd,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			}
+		};		
+		request(options, function (error, response) {
+			if (error !== null) {
+				self.log('error', 'HTTP Request failed (' + error + ')');
+				self.status(self.STATUS_ERROR, error);
+				console.log(error);
+			}
+			else {
+				self.status(self.STATUS_OK);
+				//console.log(response.body);		
+				parseString(response.body, function (err, result) {
+				//console.log(util.inspect(result, false, null));
+					var totalcalls = (result["calls"].$.total);
+					//console.log("Total Calls in Server = " + totalcalls);
+					for (i =0; i < totalcalls ; i ++) {
+						var name = (result["calls"].call[i].name);
+						var callID = (result["calls"].call[i].$.id);
+						//console.log(name + " = " + callID);
+						self.calllist.push({ id: callID, label: name });
+					}
+					//console.log(self.calllist);
+					self.actions();
+				});
+			}
+		});
+
+		cmd2 = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/';
+		options2 = {
+			'method': 'GET',
+			'rejectUnauthorized': false,
+			'url': cmd2,
+			'headers': {
+				'Authorization': 'Basic' + authstring,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			}
+		};		
+		request(options2, function (error, response2) {
+			if (error !== null) {
+				self.log('error', 'HTTP Request failed (' + error + ')');
+				self.status(self.STATUS_ERROR, error);
+				console.log(error);
+			}
+			else {
+				self.status(self.STATUS_OK);
+				//console.log(response.body);		
+				parseString(response2.body, function (err, result2) {
+				//console.log(util.inspect(result, false, null));
+					var totalcalllegs = (result2["callLegs"].$.total);
+					//console.log("Total CallLegs in Server = " + totalcalllegs);
+					for (i =0; i < totalcalllegs ; i ++) {
+						var name = (result2["callLegs"].callLeg[i].name);
+						var remotepty = (result2["callLegs"].callLeg[i].remoteParty);
+						var callLegID = (result2["callLegs"].callLeg[i].$.id);
+						//console.log(name + " = " + callLegID  + " = " + remotepty );
+						if (name != "") {
+							self.callleglist.push({ id: callLegID, label: name });
+						}
+						else {
+							self.callleglist.push({ id: callLegID, label: remotepty });
+						}
+						
+					}
+					//console.log(self.callleglist);
+					self.actions();
+				});
+			}
+		});
+
+
+
+	};
+
+	if (this.pollAPI) {
+		clearInterval(this.pollAPI);
+	}
+
+	if (this.config.apiPollInterval != 0) {
+		this.pollAPI = setInterval(getCalls, this.config.apiPollInterval < 100 ? 100 : this.config.apiPollInterval);
+	}
+}
 // When module gets deleted
 instance.prototype.destroy = function() {
 	var self = this;
@@ -101,6 +224,19 @@ instance.prototype.actions = function(system) {
 		'audioMute': {
 			label: 'Participant Audio',
 			options: [
+				{
+					type: 'dropdown',
+					label: 'Call',
+					id: 'callleg',
+					default: '',
+					choices: self.callleglist
+				},
+				{
+					type: 'text',
+					id: 'info',
+					label: 'Paste callLeg bellow ONLY if you cant find the call in the list above',
+					value: 'Paste callLeg bellow ONLY if you cant find the call in the list above'
+				},
 				{
 					type: 'textinput',
 					label: "callleg ID",
@@ -121,6 +257,19 @@ instance.prototype.actions = function(system) {
 			label: 'Participant Video',
 			options: [
 				{
+					type: 'dropdown',
+					label: 'Call',
+					id: 'callleg',
+					default: '',
+					choices: self.callleglist
+				},
+				{
+					type: 'text',
+					id: 'info',
+					label: 'Paste callLeg bellow ONLY if you cant find the call in the list above',
+					value: 'Paste callLeg bellow ONLY if you cant find the call in the list above'
+				},
+				{
 					type: 'textinput',
 					label: "callleg ID",
 					id: 'callerID',
@@ -140,8 +289,21 @@ instance.prototype.actions = function(system) {
 			label: 'Call Layout for all participants',
 			options: [
 				{
+					type: 'dropdown',
+					label: 'Call',
+					id: 'call',
+					default: '',
+					choices: self.calllist
+				},
+				{
+					type: 'text',
+					id: 'info',
+					label: 'Paste call ID bellow ONLY if you cant find the call in the list above',
+					value: 'Paste call ID bellow ONLY if you cant find the call in the list above'
+				},
+				{
 					type: 'textinput',
-					label: "callleg ID",
+					label: "callID",
 					id: 'callID',
 					default: ''
 				},
@@ -158,6 +320,19 @@ instance.prototype.actions = function(system) {
 		'callerLayout': {
 			label: 'Call Layout for a single participant',
 			options: [
+				{
+					type: 'dropdown',
+					label: 'Call',
+					id: 'callleg',
+					default: '',
+					choices: self.callleglist
+				},
+				{
+					type: 'text',
+					id: 'info',
+					label: 'Paste callLeg bellow ONLY if you cant find the call in the list above',
+					value: 'Paste callLeg bellow ONLY if you cant find the call in the list above'
+				},
 				{
 					type: 'textinput',
 					label: "callleg ID",
@@ -178,6 +353,19 @@ instance.prototype.actions = function(system) {
 			label: 'Add a participant (or room) to a call',
 			options: [
 				{
+					type: 'dropdown',
+					label: 'Call',
+					id: 'call',
+					default: '',
+					choices: self.calllist
+				},
+				{
+					type: 'text',
+					id: 'info',
+					label: 'Paste call ID bellow ONLY if you cant find the call in the list above',
+					value: 'Paste call ID bellow ONLY if you cant find the call in the list above'
+				},
+				{
 					type: 'textinput',
 					label: "callID",
 					id: 'callID',
@@ -195,6 +383,19 @@ instance.prototype.actions = function(system) {
 			label: 'Drop participant (or room) from a call',
 			options: [
 				{
+					type: 'dropdown',
+					label: 'Participant',
+					id: 'callleg',
+					default: '',
+					choices: self.callleglist
+				},
+				{
+					type: 'text',
+					id: 'info',
+					label: 'Paste callLeg bellow ONLY if you cant find the call in the list above',
+					value: 'Paste callLeg bellow ONLY if you cant find the call in the list above'
+				},
+				{
 					type: 'textinput',
 					label: "callleg ID",
 					id: 'callerID',
@@ -205,6 +406,19 @@ instance.prototype.actions = function(system) {
 		'dropCall': {
 			label: 'Drop a call (End Meeting)',
 			options: [
+				{
+					type: 'dropdown',
+					label: 'Call',
+					id: 'call',
+					default: '',
+					choices: self.calllist
+				},
+				{
+					type: 'text',
+					id: 'info',
+					label: 'Paste call ID bellow ONLY if you cant find the call in the list above',
+					value: 'Paste call ID bellow ONLY if you cant find the call in the list above'
+				},
 				{
 					type: 'textinput',
 					label: "callID",
@@ -224,8 +438,13 @@ instance.prototype.action = function(action) {
 	var options;
 		
 	if (action.action == 'audioMute') {
-			
-		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		
+		if (action.options.callerID != ""){
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		}
+		else {
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callleg;
+		}
 		options = {
 			'method': 'PUT',
 			'rejectUnauthorized': false,
@@ -241,7 +460,12 @@ instance.prototype.action = function(action) {
 	}
 	else if (action.action == 'videoMute') {
 		
-		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		if (action.options.callerID != ""){
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		}
+		else {
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callleg;
+		}
 		options = {
 			'method': 'PUT',
 			'rejectUnauthorized': false,
@@ -256,8 +480,14 @@ instance.prototype.action = function(action) {
 		};
 	}
 	else if (action.action == 'callLayout') {
-			
-		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID + '/participants/*';
+		
+		if (action.options.callID != ""){
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID + '/participants/*';
+		}
+		else {
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.call + '/participants/*';
+		}
+
 		options = {
 			'method': 'PUT',
 			'rejectUnauthorized': false,
@@ -273,7 +503,12 @@ instance.prototype.action = function(action) {
 	}
 	else if (action.action == 'addParticipant') {
 			
-		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID + '/participants';
+		if (action.options.callID != ""){
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID + '/participants';
+		}
+		else {
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.call + '/participants';
+		}
 		options = {
 			'method': 'POST',
 			'rejectUnauthorized': false,
@@ -289,7 +524,12 @@ instance.prototype.action = function(action) {
 	}
 	else if (action.action == 'callerLayout') {
 			
-		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		if (action.options.callerID != ""){
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		}
+		else {
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callleg;
+		}
 		options = {
 			'method': 'PUT',
 			'rejectUnauthorized': false,
@@ -305,7 +545,12 @@ instance.prototype.action = function(action) {
 	}
 	else if (action.action == 'dropParticipant') {
 			
-		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		if (action.options.callerID != ""){
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callerID;
+		}
+		else {
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/' + action.options.callleg;
+		}
 		options = {
 			'method': 'DELETE',
 			'rejectUnauthorized': false,
@@ -317,8 +562,13 @@ instance.prototype.action = function(action) {
 		};
 	}
 	else if (action.action == 'dropCall') {
-			
-		cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID;
+		if (action.options.callID != ""){
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.callID;
+		}
+		else {
+			cmd = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/' + action.options.call;
+		}
+
 		options = {
 			'method': 'DELETE',
 			'rejectUnauthorized': false,
