@@ -186,27 +186,91 @@ instance.prototype.initAPI = function() {
                     //console.log(util.inspect(result, false, null));
                     if (result) {
                         var totalcalls = (result["calls"].$.total);
-						if (totalcalls == '0'){
-							self.calllist.push({
-                                id: '0',
-                                label: 'No Calls Found'
-                            });
-						}
-						else {
-                        //console.log("Total Calls in Server = " + totalcalls);
-                        for (i = 0; i < totalcalls; i++) {
-                            var name = (result["calls"].call[i].name);
-                            var callID = (result["calls"].call[i].$.id);
-                            //console.log(name + " = " + callID);
-                            self.calllist.push({
-                                id: callID,
-                                label: name
-                            });
+                        var iterations = Math.floor((((totalcalls) / 10 +1)));
+                        //console.log ("Will Iterate = " + iterations);
+                        if (iterations < 2){
+                            //console.log ("Iterations less than 2");
+                            if (totalcalls == '0'){
+                                self.calllist.push({
+                                    id: '0',
+                                    label: 'No Calls Found'
+                                });
+                            }
+                            else {
+                            //console.log("Total Calls in Server = " + totalcalls);
+                            for (i in (result["calls"].call)) {
+                                var name = (result["calls"].call[i].name);
+                                var callID = (result["calls"].call[i].$.id);
+                                //console.log(name + " = " + callID);
+                                self.calllist.push({
+                                    id: callID,
+                                    label: name
+                                });
+                            }
+
+                            }
                         }
-                        //console.log(self.calllist);
-                        //self.actions();
+                        else {
+                            // console.log ("Iterations more or equal to 2");
+                             // first iterstion is already done.
+                             console.log ("Iteration 1");
+                             for (i in (result["calls"].call)) {
+                                var name = (result["calls"].call[i].name);
+                                var callID = (result["calls"].call[i].$.id);
+                                //console.log(name + " = " + callID);
+                                self.calllist.push({
+                                    id: callID,
+                                    label: name
+                                });
+                            }
+                             // next iterations
+                             for (i = 1; i < iterations; i++) {
+                                 
+                                 console.log("Iterating with offset " + i*10);
+                                 cmd3 = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/?offset=' + i*10;
+                                 options3 = {
+                                     'method': 'GET',
+                                     'rejectUnauthorized': false,
+                                     'url': cmd3,
+                                     'headers': {
+                                         'Authorization': 'Basic' + authstring,
+                                         'Content-Type': 'application/x-www-form-urlencoded'
+                                     }
+                                 };
+                                 request(options3, function(error, response3) {
+                                     if (error !== null) {
+                                         self.log('error', 'HTTP Request failed (' + error + ')');
+                                         self.status(self.STATUS_ERROR, error);
+                                         console.log(error);
+                                     } else {
+                                         self.status(self.STATUS_OK);                                         
+                                            parseString(response3.body, function(err, result3) {
+                                                //console.log(util.inspect(result3, false, null));
+                                                if (result3){
+                                                    if (result3["calls"].$.total != '0') {
+                                                        for (i in (result3["calls"].call)) {
+                                                            var name = (result3["calls"].call[i].name);
+                                                            var callID = (result3["calls"].call[i].$.id);
+                                                            //console.log(name + " = " + callID);
+                                                            self.calllist.push({
+                                                                id: callID,
+                                                                label: name
+                                                            });
+                                                        }
+                                                    }
+                                                    else {
+                                                        console.log("No Calls on this Page");
+                                                    }
+                                            }
+                                            
+                                            });
+                                            
+                                     }
+                                 });                                                           
+                                
+                             };
+                         }
                     }
-				}
                 });
 
             }
@@ -234,33 +298,108 @@ instance.prototype.initAPI = function() {
                     //console.log(util.inspect(result2, false, null));
                     if (result2) {
                         var totalcalllegs = (result2["callLegs"].$.total);
+                        var iterations = Math.floor((((totalcalllegs) / 10 +1)));
+                        //console.log ("Will Iterate = " + iterations);
                         //console.log("Total CallLegs in Server = " + totalcalllegs);
-						if (totalcalllegs == '0'){
-							self.callleglist.push({
-                                id: '0',
-                                label: 'No CallLegs Found'
-                            });
-						}
-						else {
-                        for (i = 0; i < totalcalllegs; i++) {
-                            var name = (result2["callLegs"].callLeg[i].name);
-                            var remotepty = (result2["callLegs"].callLeg[i].remoteParty);
-                            var callLegID = (result2["callLegs"].callLeg[i].$.id);
-                            //console.log(name + " = " + callLegID  + " = " + remotepty );
-                            if (name != "") {
+						if (iterations < 2){
+                            console.log ("Iterations less than 2");
+                            if (totalcalllegs == '0'){
                                 self.callleglist.push({
-                                    id: callLegID,
-                                    label: name
-                                });
-                            } else {
-                                self.callleglist.push({
-                                    id: callLegID,
-                                    label: remotepty
+                                    id: '0',
+                                    label: 'No CallLegs Found'
                                 });
                             }
-                        }
+                            else {
+                                for (i in (result2["callLegs"].callLeg)) {
+                                    var name = (result2["callLegs"].callLeg[i].name);
+                                    var remotepty = (result2["callLegs"].callLeg[i].remoteParty);
+                                    var callLegID = (result2["callLegs"].callLeg[i].$.id);
+                                    //console.log(name + " = " + callLegID  + " = " + remotepty );
+                                    if (name != "") {
+                                        self.callleglist.push({
+                                            id: callLegID,
+                                            label: name
+                                        });
+                                    } else {
+                                        self.callleglist.push({
+                                            id: callLegID,
+                                            label: remotepty
+                                        });
+                                    }
+                            }
+                            }
 					}
-					}
+                        else {
+                           // console.log ("Iterations more or equal to 2");
+                            // first iterstion is already done.
+                            //console.log ("Iteration 1");
+                            for (i in (result2["callLegs"].callLeg)) {
+                                var name = (result2["callLegs"].callLeg[i].name);
+                                var remotepty = (result2["callLegs"].callLeg[i].remoteParty);
+                                var callLegID = (result2["callLegs"].callLeg[i].$.id);
+                                //console.log(name + " = " + callLegID  + " = " + remotepty );
+                                if (name != "") {
+                                    self.callleglist.push({
+                                        id: callLegID,
+                                        label: name
+                                    });
+                                } else {
+                                    self.callleglist.push({
+                                        id: callLegID,
+                                        label: remotepty
+                                    });
+                                }
+                            }
+                            // next iterations
+                            for (i = 1; i < iterations; i++) {
+                                
+                                //console.log("Iterating with offset " + i*10);
+                                cmd4 = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/callLegs/?offset=' + i*10;
+                                options4 = {
+                                    'method': 'GET',
+                                    'rejectUnauthorized': false,
+                                    'url': cmd4,
+                                    'headers': {
+                                        'Authorization': 'Basic' + authstring,
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    }
+                                };
+                                request(options4, function(error, response4) {
+                                    if (error !== null) {
+                                        self.log('error', 'HTTP Request failed (' + error + ')');
+                                        self.status(self.STATUS_ERROR, error);
+                                        console.log(error);
+                                    } else {
+                                        self.status(self.STATUS_OK);
+                                        parseString(response4.body, function(err, result4) {
+                                            //console.log(util.inspect(result4, false, null));
+                                            if (result4) {
+                                                for (i in (result4["callLegs"].callLeg)) {
+                                                    var name = (result4["callLegs"].callLeg[i].name);
+                                                    var remotepty = (result4["callLegs"].callLeg[i].remoteParty);
+                                                    var callLegID = (result4["callLegs"].callLeg[i].$.id);
+                                                    //console.log(name + " = " + callLegID  + " = " + remotepty );
+                                                    if (name != "") {
+                                                        self.callleglist.push({
+                                                            id: callLegID,
+                                                            label: name
+                                                        });
+                                                    } else {
+                                                        self.callleglist.push({
+                                                            id: callLegID,
+                                                            label: remotepty
+                                                        });
+                                                    }
+                                            }
+                                            }
+                                        });
+
+                                    }
+                                });                                                           
+                               
+                            };
+                        }    
+                    }
                 });
             }
         });
