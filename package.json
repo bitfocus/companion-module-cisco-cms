@@ -1,6 +1,6 @@
 {
 	"name": "cisco-cms",
-	"version": "0.3",
+	"version": "0.3.1",
 	"legacy": [
 		"cms"
 	],
