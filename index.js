@@ -312,7 +312,7 @@ instance.prototype.initAPI = function() {
                         //console.log ("Will Iterate = " + iterations);
                         //console.log("Total CallLegs in Server = " + totalcalllegs);
                         if (iterations < 2){
-                            console.log ("Iterations less than 2");
+                            //console.log ("Iterations less than 2");
                             if (totalcalllegs == '0'){
                                 self.callleglist.push({
                                     id: '0',
