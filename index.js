@@ -236,7 +236,7 @@ instance.prototype.initAPI = function() {
                             // next iterations
                             for (i = 1; i < iterations; i++) {
                                 
-                                console.log("Iterating with offset " + i*10);
+                                //console.log("Iterating with offset " + i*10);
                                 cmd3 = 'https://' + self.config.host + ':' + self.config.port + '/api/v1' + '/calls/?offset=' + i*10;
                                 options3 = {
                                     'method': 'GET',
@@ -269,7 +269,7 @@ instance.prototype.initAPI = function() {
                                                     }
                                                 }
                                                 else {
-                                                    console.log("No Calls on this Page");
+                                                    //console.log("No Calls on this Page");
                                                 }
                                             }
                                             
