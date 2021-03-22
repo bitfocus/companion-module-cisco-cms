@@ -223,7 +223,7 @@ instance.prototype.initAPI = function() {
                         else {
                             // console.log ("Iterations more or equal to 2");
                             // first iterstion is already done.
-                            console.log ("Iteration 1");
+                            //console.log ("Iteration 1");
                             for (i in (result["calls"].call)) {
                                 var name = (result["calls"].call[i].name);
                                 var callID = (result["calls"].call[i].$.id);
