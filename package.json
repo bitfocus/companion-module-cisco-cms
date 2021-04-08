@@ -1,5 +1,5 @@
 {
-	"name": "cisco-cms-test",
+	"name": "cisco-cms",
 	"version": "1.0.1",
 	"legacy": [
 		"cms"
