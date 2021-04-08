@@ -324,16 +324,29 @@ instance.prototype.initAPI = function() {
                                     var name = (result2["callLegs"].callLeg[i].name);
                                     var remotepty = (result2["callLegs"].callLeg[i].remoteParty);
                                     var callLegID = (result2["callLegs"].callLeg[i].$.id);
+                                    var call = (result2["callLegs"].callLeg[i].call);
+                                    var incall = null;    
+                                    for (var i = 0; i < self.calllist.length; i++) {
+                                        if (self.calllist[i].id == call) {
+                                            incall = self.calllist[i];
+                                            break;
+                                        }
+                                        else {
+                                            incall = [
+                                            { id: "null" , label: "null"}]
+                                        }  
+                                    }
+                                    //console.log(name + " in " + incall.label)
                                     //console.log(name + " = " + callLegID  + " = " + remotepty );
                                     if (name != "") {
                                         self.callleglist.push({
                                             id: callLegID,
-                                            label: name
+                                            label: name + " in " + incall.label
                                         });
                                     } else {
                                         self.callleglist.push({
                                             id: callLegID,
-                                            label: remotepty
+                                            label: remotepty + " in " + incall.label
                                         });
                                     }
                                 }
@@ -347,16 +360,28 @@ instance.prototype.initAPI = function() {
                                 var name = (result2["callLegs"].callLeg[i].name);
                                 var remotepty = (result2["callLegs"].callLeg[i].remoteParty);
                                 var callLegID = (result2["callLegs"].callLeg[i].$.id);
+                                var call = (result2["callLegs"].callLeg[i].call);
+                                var incall = null;    
+                                    for (var i = 0; i < self.calllist.length; i++) {
+                                        if (self.calllist[i].id == call) {
+                                            incall = self.calllist[i];
+                                            break;
+                                        }
+                                        else {
+                                            incall = [
+                                            { id: "null" , label: "null"}]
+                                        }
+                                    }
                                 //console.log(name + " = " + callLegID  + " = " + remotepty );
                                 if (name != "") {
                                     self.callleglist.push({
                                         id: callLegID,
-                                        label: name
+                                        label: name + " in " + incall.label
                                     });
                                 } else {
                                     self.callleglist.push({
                                         id: callLegID,
-                                        label: remotepty
+                                        label: remotepty + " in " + incall.label
                                     });
                                 }
                             }
