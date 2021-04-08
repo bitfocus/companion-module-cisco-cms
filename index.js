@@ -142,7 +142,7 @@ instance.prototype.config_fields = function() {
         width: 12,
         label: 'API Poll Interval warning',
         value: 'Adjusting the API Polling Interval can impact performance. <br />' +
-        'A lower invterval allows for more responsive feedback, but may impact CPU usage. <br />' +
+        'A lower interval allows for more responsive feedback, but may impact CPU usage. <br />' +
         'See the help section for more details.'
     },
     {
@@ -336,6 +336,17 @@ instance.prototype.initAPI = function() {
                                             { id: "null" , label: "null"}]
                                         }  
                                     }
+                                    try {
+                                        if (incall.label === undefined)
+                                        {
+                                            incall = [
+                                                { id: "null" , label: "null"}]
+                                        }
+                                      }
+                                      catch(err) {
+                                        incall = [
+                                            { id: "null" , label: "null"}]
+                                      }
                                     //console.log(name + " in " + incall.label)
                                     //console.log(name + " = " + callLegID  + " = " + remotepty );
                                     if (name != "") {
@@ -372,6 +383,17 @@ instance.prototype.initAPI = function() {
                                             { id: "null" , label: "null"}]
                                         }
                                     }
+                                    try {
+                                        if (incall.label === undefined)
+                                        {
+                                            incall = [
+                                                { id: "null" , label: "null"}]
+                                        }
+                                      }
+                                      catch(err) {
+                                        incall = [
+                                            { id: "null" , label: "null"}]
+                                      }
                                 //console.log(name + " = " + callLegID  + " = " + remotepty );
                                 if (name != "") {
                                     self.callleglist.push({
@@ -413,16 +435,39 @@ instance.prototype.initAPI = function() {
                                                     var name = (result4["callLegs"].callLeg[i].name);
                                                     var remotepty = (result4["callLegs"].callLeg[i].remoteParty);
                                                     var callLegID = (result4["callLegs"].callLeg[i].$.id);
+                                                    var call = (result2["callLegs"].callLeg[i].call);
+                                                    var incall = null;    
+                                                        for (var i = 0; i < self.calllist.length; i++) {
+                                                            if (self.calllist[i].id == call) {
+                                                                incall = self.calllist[i];
+                                                                break;
+                                                            }
+                                                            else {
+                                                                incall = [
+                                                                { id: "null" , label: "null"}]
+                                                            }
+                                                        }
+                                                        try {
+                                                            if (incall.label === undefined)
+                                                            {
+                                                                incall = [
+                                                                    { id: "null" , label: "null"}]
+                                                            }
+                                                        }
+                                                        catch(err) {
+                                                            incall = [
+                                                                { id: "null" , label: "null"}]
+                                                        }
                                                     //console.log(name + " = " + callLegID  + " = " + remotepty );
                                                     if (name != "") {
                                                         self.callleglist.push({
                                                             id: callLegID,
-                                                            label: name
+                                                            label: name + " in " + incall.label
                                                         });
                                                     } else {
                                                         self.callleglist.push({
                                                             id: callLegID,
-                                                            label: remotepty
+                                                            label: remotepty + " in " + incall.label
                                                         });
                                                     }
                                                 }
