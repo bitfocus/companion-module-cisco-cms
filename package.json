@@ -1,10 +1,10 @@
 {
 	"name": "cisco-cms",
-	"version": "1.1.1",
+	"version": "1.0.1",
 	"legacy": [
 		"cms"
 	],
-	"api_version": "3.1.0",
+	"api_version": "1.0.0",
 	"keywords": [
 		"Video Conferencing"
 	],
