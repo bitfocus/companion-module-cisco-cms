@@ -19,5 +19,13 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"author": "Yuri Vidal <yuri.vidal@gmail.com>",
-	"license": "MIT"
+	"license": "MIT",
+	"homepage": "https://github.com/bitfocus/companion-module-cisco-cms#readme",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-cisco-cms/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-cisco-cms.git"
+	}
 }
